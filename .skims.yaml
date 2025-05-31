@@ -1,0 +1,19 @@
+namespace: wackopicko
+
+strict: true
+
+output:
+  file_path: Fluid-Attacks-Results.csv
+  format: CSV
+
+working_dir: /scan_target # This is the path *inside* the Docker container
+
+language: EN
+
+sast:
+  include:
+    - .
+  exclude:
+    - glob(**/node_modules/**)
+    - glob(**/vendor/**)
+    - glob(**/tests/**)

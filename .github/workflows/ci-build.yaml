@@ -16,5 +16,6 @@ jobs:
       - name: Run Skims Scan in Strict Mode
         run: |
           echo "Starting Skims scan in --strict mode..."
-          docker run --rm -v "$(pwd)":/scan_target fluidattacks/skims:latest skims --strict scan /scan_target
+          docker run --rm -v "$(pwd)":/scan_target fluidattacks/skims:latest \
+          skims scan /scan_target/.skims.yaml
           echo "Skims scan completed. No vulnerabilities found in strict mode."
