@@ -1,4 +1,4 @@
-name: Scan with skims
+name: Scan with Skims
 
 on:
   push:
@@ -13,47 +13,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Run Skims Scan Output Evaluate
+      - name: Run Skims Scan in Strict Mode
         run: |
-          echo "Starting Skims scan..."
-          set -o pipefail
-          skims_output=$(docker run --rm -v "$(pwd)":/scan_target fluidattacks/skims:latest skims scan /scan_target 2>&1)
-          skims_exit_code=$?
-          set +o pipefail
-
-          echo "--- Skims Full Output ---"
-          echo "${skims_output}"
-          echo "--- End of Skims Output ---"
-          echo "Skims original exit code: ${skims_exit_code}"
-
-
-          workflow_should_fail=false
-
-
-          if [ "${skims_exit_code}" -ne 0 ]; then
-            echo "::error title=Skims Command Failure::Skims command exited with a non-zero status: ${skims_exit_code}. This indicates a critical error during the scan itself."
-            workflow_should_fail=true
-          fi
-
-
-          if echo "${skims_output}" | grep -qE "Summary: ([1-9]|[1-9][0-9]+) vulnerabilities? (were|was) found"; then
-            vulnerability_summary=$(echo "${skims_output}" | grep -E "Summary: ([1-9]|[1-9][0-9]+) vulnerabilities? (were|was) found" | sed -e 's/^[[:space:]]*\[INFO\][[:space:]]*//')
-            echo "::error title=Vulnerabilities Found (Summary)::${vulnerability_summary}"
-            workflow_should_fail=true
-          fi
-
-
-          if echo "${skims_output}" | grep -qE "(^CWE-[0-9]+ - CVSS|\[WARNING\]|\[ERROR\])"; then
-
-          echo "::warning title=Critical Patterns Found::Skims scan reported specific patterns like CWE issues, warnings, or errors. Review output for details."
-
-          workflow_should_fail=true
-          fi
-
-
-          if [ "${workflow_should_fail}" = true ]; then
-            echo "Failing workflow due to Skims findings or errors."
-            exit 1
-          else
-            echo "Skims scan completed. No critical issues found by custom checks that would force failure."
-          fi
+          echo "Starting Skims scan in --strict mode..."
+          docker run --rm -v "$(pwd)":/scan_target fluidattacks/skims:latest skims --strict scan /scan_target
+          echo "Skims scan completed. No vulnerabilities found in strict mode."
