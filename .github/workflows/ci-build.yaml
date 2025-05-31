@@ -1,0 +1,20 @@
+name: Scan with skims
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  skims-scan:
+    name: Run Fluid Attacks Skims Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run Skims Scan
+        run: |
+          echo "Starting Skims scan..."
+          docker run --rm -v "$(pwd)":/WackoPicko fluidattacks/skims:latest skims scan /WackoPicko
+          echo "Skims scan completed."
