@@ -1,59 +1,38 @@
-name: Debug Skims CSV Creation (Strict Mode)
-
+name: Scan with Skims
 on:
   push:
   pull_request:
-
 jobs:
-  debug-skims-output:
-    name: Debug Skims File Creation
+  skims-scan:
+    name: Run Fluid Attacks Skims Scan
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Run Skims Scan with Strict Config
-        id: skims_run # Give the step an ID
-        # We will let this step fail if skims exits non-zero,
-        # but we want to see the subsequent ls step regardless.
-        # So, we use 'continue-on-error: true' on THIS step.
+      - name: Run Skims Scan in Strict Mode
         continue-on-error: true
         run: |
-          echo "::group::Running Skims Scan (strict: true from .skims.yaml)"
-          echo "Current directory: $(pwd)"
-          echo "Contents of .skims.yaml:"
-          cat .skims.yaml
-          echo "---"
-
-          # Run the skims command
+          echo "Starting Skims scan in --strict mode..."
           docker run --rm -v "$(pwd)":/scan_target fluidattacks/skims:latest \
-            skims scan /scan_target/.skims.yaml
+          skims scan /scan_target/.skims.yaml
+          echo "Skims scan completed."
 
-          # The exit code of the above docker run command will determine if this script block
-          # is considered a "success" or "failure" by the 'continue-on-error' directive.
-          echo "Skims scan command finished execution."
-          echo "::endgroup::"
-
-      - name: List files in workspace after Skims run
-        # This step will run even if the previous 'Run Skims Scan' step was marked as failed
-        # (due to continue-on-error: true on that step and if: always() here).
-        if: always()
+      - name: Check if CSV file was created
         run: |
-          echo "---"
-          echo "Outcome of Skims run step: ${{ steps.skims_run.outcome }}"
-          echo "Conclusion of Skims run step: ${{ steps.skims_run.conclusion }}"
-          echo "---"
-          echo "Listing files in the current working directory ($(pwd)) after Skims scan:"
-          ls -la
-          echo "---"
-          echo "Checking specifically for Fluid-Attacks-Results.csv:"
           if [ -f "Fluid-Attacks-Results.csv" ]; then
-            echo "✅ Fluid-Attacks-Results.csv FOUND."
-            echo "--- Contents of Fluid-Attacks-Results.csv (first 10 lines) ---"
-            head -n 10 Fluid-Attacks-Results.csv
-            echo "--- End of CSV preview ---"
+            echo "CSV file found"
+            ls -la Fluid-Attacks-Results.csv
           else
-            echo "❌ Fluid-Attacks-Results.csv NOT FOUND."
+            echo "CSV file not found"
+            ls -la
           fi
-          echo "---"
+
+      - name: Upload Skims Scan Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+            name: skims-vulnerability-report
+            path: Fluid-Attacks-Results.csv
+            retention-days: 7
+            if-no-files-found: warn
