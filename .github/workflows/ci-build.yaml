@@ -19,3 +19,13 @@ jobs:
           docker run --rm -v "$(pwd)":/scan_target fluidattacks/skims:latest \
           skims scan /scan_target/.skims.yaml
           echo "Skims scan completed. No vulnerabilities found in strict mode."
+
+
+      - name: Upload Skims Scan Report
+        if: always()
+        uses: actions/upload-artifact@v4 # Use the latest version
+        with:
+            name: skims-vulnerability-report
+            path: Fluid-Attacks-Results.csv
+            retention-days: 7
+            if-no-files-found: error

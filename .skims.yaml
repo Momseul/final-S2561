@@ -6,7 +6,7 @@ output:
   file_path: Fluid-Attacks-Results.csv
   format: CSV
 
-working_dir: /scan_target # This is the path *inside* the Docker container
+working_dir: /scan_target
 
 language: EN
 
